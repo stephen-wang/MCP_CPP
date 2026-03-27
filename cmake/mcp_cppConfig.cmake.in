@@ -1,0 +1,5 @@
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/mcp_cppTargets.cmake")
+
+check_required_components(mcp_cpp)
