@@ -1,6 +1,8 @@
 #include <mcp/client.hpp>
 #include <mcp/client/transport.hpp>
 
+#include "json_rpc_util.hpp"
+
 #include <cstdint>
 #include <stdexcept>
 #include <string>
@@ -11,54 +13,15 @@ namespace mcp::client
 {
     namespace
     {
-
-        std::string escape_json_string(std::string_view value)
-        {
-            std::string escaped;
-            escaped.reserve(value.size() + 8);
-
-            for (const char ch : value)
-            {
-                switch (ch)
-                {
-                case '\\':
-                    escaped += "\\\\";
-                    break;
-                case '"':
-                    escaped += "\\\"";
-                    break;
-                case '\n':
-                    escaped += "\\n";
-                    break;
-                case '\r':
-                    escaped += "\\r";
-                    break;
-                case '\t':
-                    escaped += "\\t";
-                    break;
-                default:
-                    escaped += ch;
-                    break;
-                }
-            }
-
-            return escaped;
-        }
-
-        std::string quote_json_string(std::string_view value)
-        {
-            return std::string{"\""} + escape_json_string(value) + '"';
-        }
-
         std::string build_client_info_json(const ClientInfo &client_info)
         {
             std::string json = "{";
-            json += "\"name\":" + quote_json_string(client_info.name);
-            json += ",\"version\":" + quote_json_string(client_info.version);
+            json += "\"name\":" + mcp::detail::quote_json_string(client_info.name);
+            json += ",\"version\":" + mcp::detail::quote_json_string(client_info.version);
 
             if (client_info.title)
             {
-                json += ",\"title\":" + quote_json_string(*client_info.title);
+                json += ",\"title\":" + mcp::detail::quote_json_string(*client_info.title);
             }
 
             json += '}';
@@ -77,23 +40,7 @@ namespace mcp::client
 
             if (!capabilities.experimental.empty())
             {
-                json += ",\"experimental\":{";
-
-                bool first = true;
-                for (const auto &[key, value] : capabilities.experimental)
-                {
-                    if (!first)
-                    {
-                        json += ',';
-                    }
-
-                    json += quote_json_string(key);
-                    json += ':';
-                    json += value.empty() ? "null" : value;
-                    first = false;
-                }
-
-                json += '}';
+                json += ",\"experimental\":" + mcp::detail::build_property_map_json(capabilities.experimental);
             }
 
             json += '}';
@@ -103,7 +50,7 @@ namespace mcp::client
         std::string build_initialize_params_json(const InitializeParams &params)
         {
             std::string json = "{";
-            json += "\"protocolVersion\":" + quote_json_string(params.protocol_version);
+            json += "\"protocolVersion\":" + mcp::detail::quote_json_string(params.protocol_version);
             json += ",\"clientInfo\":" + build_client_info_json(params.client_info);
             json += ",\"capabilities\":" + build_capabilities_json(params.capabilities);
             json += '}';
@@ -115,18 +62,7 @@ namespace mcp::client
             std::string json = "{";
             json += "\"jsonrpc\":\"2.0\"";
             json += ",\"id\":" + std::to_string(id);
-            json += ",\"method\":" + quote_json_string(method);
-            json += ",\"params\":";
-            json += params.empty() ? "{}" : std::string{params};
-            json += '}';
-            return json;
-        }
-
-        std::string build_notification_message(std::string_view method, std::string_view params)
-        {
-            std::string json = "{";
-            json += "\"jsonrpc\":\"2.0\"";
-            json += ",\"method\":" + quote_json_string(method);
+            json += ",\"method\":" + mcp::detail::quote_json_string(method);
             json += ",\"params\":";
             json += params.empty() ? "{}" : std::string{params};
             json += '}';
@@ -257,7 +193,7 @@ namespace mcp::client
                 throw std::logic_error("client is not ready to send notifications");
             }
 
-            transport->send(build_notification_message(method, params));
+            transport->send(mcp::detail::build_notification_message(method, params));
         }
 
         [[nodiscard]] const ServerInfo &server_info() const
