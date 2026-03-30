@@ -20,7 +20,8 @@ endif()
 
 add_library(mcp_cpp ${MCP_CPP_LIBRARY_TYPE}
     src/client.cpp
-    src/server.cpp)
+    src/server.cpp
+    src/stdio_transport.cpp)
 
 add_library(mcp::mcp_cpp ALIAS mcp_cpp)
 
@@ -70,6 +71,9 @@ if(BUILD_TESTING)
     add_executable(mcp_cpp_server_smoke_test
         tests/server_smoke_test.cpp)
 
+    add_executable(mcp_cpp_stdio_transport_smoke_test
+        tests/stdio_transport_smoke_test.cpp)
+
     set_target_properties(mcp_cpp_client_smoke_test PROPERTIES
         CXX_STANDARD 20
         CXX_STANDARD_REQUIRED ON
@@ -80,11 +84,18 @@ if(BUILD_TESTING)
         CXX_STANDARD_REQUIRED ON
         CXX_EXTENSIONS OFF)
 
+    set_target_properties(mcp_cpp_stdio_transport_smoke_test PROPERTIES
+        CXX_STANDARD 20
+        CXX_STANDARD_REQUIRED ON
+        CXX_EXTENSIONS OFF)
+
     target_link_libraries(mcp_cpp_client_smoke_test PRIVATE mcp_cpp)
     target_link_libraries(mcp_cpp_server_smoke_test PRIVATE mcp_cpp)
+    target_link_libraries(mcp_cpp_stdio_transport_smoke_test PRIVATE mcp_cpp)
 
     add_test(NAME mcp_cpp.client_smoke_test COMMAND mcp_cpp_client_smoke_test)
     add_test(NAME mcp_cpp.server_smoke_test COMMAND mcp_cpp_server_smoke_test)
+    add_test(NAME mcp_cpp.stdio_transport_smoke_test COMMAND mcp_cpp_stdio_transport_smoke_test)
 endif()
 
 install(TARGETS mcp_cpp

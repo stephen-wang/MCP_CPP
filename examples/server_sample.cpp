@@ -1,5 +1,6 @@
 #include <mcp/server.hpp>
 #include <mcp/server/transport.hpp>
+#include <mcp/logging.hpp>
 
 #include <iostream>
 #include <memory>
@@ -14,12 +15,12 @@ namespace
     public:
         void listen() override
         {
-            std::cout << "[transport] listen" << std::endl;
+            mcp::log_output << "[transport] listen" << std::endl;
         }
 
         void close() override
         {
-            std::cout << "[transport] close" << std::endl;
+            mcp::log_output << "[transport] close" << std::endl;
 
             if (close_handler_)
             {
@@ -29,7 +30,7 @@ namespace
 
         void send(const mcp::server::JsonString &message) override
         {
-            std::cout << "[transport] send: " << message << std::endl;
+            mcp::log_output << "[transport] send: " << message << std::endl;
         }
 
         void set_message_handler(MessageHandler handler) override
@@ -71,11 +72,11 @@ int main()
     options.server_info.instructions = "Call tools/list or tools/call to inspect the sample server.";
     options.callbacks.log = [](mcp::server::LogLevel, std::string_view message)
     {
-        std::cout << "[server] " << message << std::endl;
+        mcp::log_output << "[server] " << message << std::endl;
     };
     options.callbacks.state_changed = [](mcp::server::ServerState state)
     {
-        std::cout << "[server] state changed to " << static_cast<int>(state) << std::endl;
+        mcp::log_output << "[server] state changed to " << static_cast<int>(state) << std::endl;
     };
 
     auto transport = std::make_shared<ConsoleServerTransport>();

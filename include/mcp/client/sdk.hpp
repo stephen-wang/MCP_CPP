@@ -9,6 +9,8 @@
  */
 
 #include <mcp/client.hpp>
+#include <mcp/logging.hpp>
 #include <mcp/client/options.hpp>
+#include <mcp/client/stdio_transport.hpp>
 #include <mcp/client/transport.hpp>
 #include <mcp/client/types.hpp>

@@ -1,5 +1,6 @@
 #include <mcp/client.hpp>
 #include <mcp/client/transport.hpp>
+#include <mcp/logging.hpp>
 
 #include <iostream>
 #include <memory>
@@ -14,12 +15,12 @@ namespace
     public:
         void connect() override
         {
-            std::cout << "[transport] connect" << std::endl;
+            mcp::log_output << "[transport] connect" << std::endl;
         }
 
         void close() override
         {
-            std::cout << "[transport] close" << std::endl;
+            mcp::log_output << "[transport] close" << std::endl;
 
             if (close_handler_)
             {
@@ -29,7 +30,7 @@ namespace
 
         void send(const mcp::client::JsonString &message) override
         {
-            std::cout << "[transport] send: " << message << std::endl;
+            mcp::log_output << "[transport] send: " << message << std::endl;
         }
 
         void set_message_handler(MessageHandler handler) override
@@ -63,11 +64,11 @@ int main()
     options.initialize.client_info.version = "0.1.0";
     options.callbacks.log = [](mcp::client::LogLevel, std::string_view message)
     {
-        std::cout << "[client] " << message << std::endl;
+        mcp::log_output << "[client] " << message << std::endl;
     };
     options.callbacks.state_changed = [](mcp::client::ConnectionState state)
     {
-        std::cout << "[client] state changed to " << static_cast<int>(state) << std::endl;
+        mcp::log_output << "[client] state changed to " << static_cast<int>(state) << std::endl;
     };
 
     auto transport = std::make_shared<ConsoleTransport>();
