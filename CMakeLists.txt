@@ -11,6 +11,7 @@ include(CTest)
 
 option(MCP_CPP_BUILD_SHARED "Build mcp_cpp as a shared library" OFF)
 option(MCP_CPP_BUILD_EXAMPLES "Build example executables" ON)
+option(MCP_CPP_BUILD_HTTPS_TRANSPORT "Build the libcurl-backed HTTP(S) transport" ON)
 
 if(MCP_CPP_BUILD_SHARED)
     set(MCP_CPP_LIBRARY_TYPE SHARED)
@@ -18,10 +19,20 @@ else()
     set(MCP_CPP_LIBRARY_TYPE STATIC)
 endif()
 
+if(MCP_CPP_BUILD_HTTPS_TRANSPORT)
+    find_package(CURL REQUIRED)
+endif()
+
 add_library(mcp_cpp ${MCP_CPP_LIBRARY_TYPE}
     src/client.cpp
     src/server.cpp
-    src/stdio_transport.cpp)
+    src/stdio_transport.cpp
+    src/server_streamable_http_transport.cpp)
+
+if(MCP_CPP_BUILD_HTTPS_TRANSPORT)
+    target_sources(mcp_cpp PRIVATE
+        src/https_transport.cpp)
+endif()
 
 add_library(mcp::mcp_cpp ALIAS mcp_cpp)
 
@@ -36,6 +47,10 @@ target_include_directories(mcp_cpp
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+
+if(MCP_CPP_BUILD_HTTPS_TRANSPORT)
+    target_link_libraries(mcp_cpp PUBLIC CURL::libcurl)
+endif()
 
 if(MSVC)
     target_compile_options(mcp_cpp PRIVATE /W4 /permissive-)
@@ -74,6 +89,14 @@ if(BUILD_TESTING)
     add_executable(mcp_cpp_stdio_transport_smoke_test
         tests/stdio_transport_smoke_test.cpp)
 
+    add_executable(mcp_cpp_server_streamable_http_transport_smoke_test
+        tests/server_streamable_http_transport_smoke_test.cpp)
+
+    if(MCP_CPP_BUILD_HTTPS_TRANSPORT)
+        add_executable(mcp_cpp_https_transport_smoke_test
+            tests/https_transport_smoke_test.cpp)
+    endif()
+
     set_target_properties(mcp_cpp_client_smoke_test PROPERTIES
         CXX_STANDARD 20
         CXX_STANDARD_REQUIRED ON
@@ -89,13 +112,35 @@ if(BUILD_TESTING)
         CXX_STANDARD_REQUIRED ON
         CXX_EXTENSIONS OFF)
 
+    set_target_properties(mcp_cpp_server_streamable_http_transport_smoke_test PROPERTIES
+        CXX_STANDARD 20
+        CXX_STANDARD_REQUIRED ON
+        CXX_EXTENSIONS OFF)
+
+    if(MCP_CPP_BUILD_HTTPS_TRANSPORT)
+        set_target_properties(mcp_cpp_https_transport_smoke_test PROPERTIES
+            CXX_STANDARD 20
+            CXX_STANDARD_REQUIRED ON
+            CXX_EXTENSIONS OFF)
+    endif()
+
     target_link_libraries(mcp_cpp_client_smoke_test PRIVATE mcp_cpp)
     target_link_libraries(mcp_cpp_server_smoke_test PRIVATE mcp_cpp)
     target_link_libraries(mcp_cpp_stdio_transport_smoke_test PRIVATE mcp_cpp)
+    target_link_libraries(mcp_cpp_server_streamable_http_transport_smoke_test PRIVATE mcp_cpp)
+
+    if(MCP_CPP_BUILD_HTTPS_TRANSPORT)
+        target_link_libraries(mcp_cpp_https_transport_smoke_test PRIVATE mcp_cpp)
+    endif()
 
     add_test(NAME mcp_cpp.client_smoke_test COMMAND mcp_cpp_client_smoke_test)
     add_test(NAME mcp_cpp.server_smoke_test COMMAND mcp_cpp_server_smoke_test)
     add_test(NAME mcp_cpp.stdio_transport_smoke_test COMMAND mcp_cpp_stdio_transport_smoke_test)
+    add_test(NAME mcp_cpp.server_streamable_http_transport_smoke_test COMMAND mcp_cpp_server_streamable_http_transport_smoke_test)
+
+    if(MCP_CPP_BUILD_HTTPS_TRANSPORT)
+        add_test(NAME mcp_cpp.https_transport_smoke_test COMMAND mcp_cpp_https_transport_smoke_test)
+    endif()
 endif()
 
 install(TARGETS mcp_cpp
